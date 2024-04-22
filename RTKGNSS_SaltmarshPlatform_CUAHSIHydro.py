@@ -115,7 +115,7 @@ def printTable(myDict, colList=None, sep='\uFFFA'):
 
 #Function code can be found here: https://stackoverflow.com/questions/17330139/python-printing-a-dictionary-as-a-horizontal-table-with-headers
 
-#The following code was made specifically for this fellowship:
+#The following function was made specifically for this fellowship:
 def smooth_and_slice(Load,TimeINUSBH): #smooth_and_slice uses a butterworth filter and slices data at every other point of slope inflection (i.e., cut into full "wavelengths")
 
 #Output the following variables to be used throughout code:
@@ -156,7 +156,7 @@ def smooth_and_slice(Load,TimeINUSBH): #smooth_and_slice uses a butterworth filt
       inflection = []; #Reset temporary inflection list
 
   inflectionMidpointTrack.append(TimeINUSBH[-1]); #After all loops are completed, be sure to add the final time value as a break point
-
+  
 #Following this, the overall time series will be broken into time series of individual survey instances
 #Track Load, Elevation, and Time components of each instance using dictionaries:
   dictLoad = {}; 
@@ -175,9 +175,11 @@ def smooth_and_slice(Load,TimeINUSBH): #smooth_and_slice uses a butterworth filt
 
   return Load_smooth, inflectionMidpoint, inflectionMidpointTrack #Output new lists
 
+#-------------------------
 figure_number = 1 #Initiate figure_number to be printed on the first figure
 
 #For each file of Load and Elevation data, perform the following operations:
+
 for file_ticker in range(0,len(rw5_files)): 
 
   sessionName = 'CUAHSI_' + surface + str(file_ticker) #Name the session with no spaces; to be used as output file name
@@ -249,7 +251,7 @@ for file_ticker in range(0,len(rw5_files)):
   cutoff = 25
   fs = 50000
 
- #Plot time series
+ #Plot overall time series of survey session
 
   fig, ax1 = plt.subplots(figsize=(20,10));
 
@@ -268,10 +270,11 @@ for file_ticker in range(0,len(rw5_files)):
   fig.autofmt_xdate();
   fig.legend(bbox_to_anchor = (0.895,0.275));
 
-  plt.savefig(f'{sessionName}_TimeSeries.png')
+  plt.savefig(f'{sessionName}_TimeSeries.png') #Save figure of time series
 
-  smooth_and_slice(Load, TimeINUSBH);
+  smooth_and_slice(Load, TimeINUSBH); #Perform smooth_and_slice to separate overall data into discretizations of individual survey points
 
+  #Create plot to visually verify success of smooth and slice function
   plt.plot(TimeINUSBH, Load_smooth, label= 'Smoothed Applied Pressure Time Series', linestyle = '-', color = 'midnightblue')
   plt.plot(TimeINUSBH, Load, linestyle = '--', label= 'Applied Pressure Time Series', color = 'cornflowerblue')
 
@@ -279,9 +282,11 @@ for file_ticker in range(0,len(rw5_files)):
   plt.xlabel('\nTime', fontstyle = 'oblique');
   plt.legend(bbox_to_anchor = (1,0.15));
 
+  #Plot vertical line of "slice" locations on overall time series
   for i in range(0,len(inflectionMidpointTrack)):
-    plt.axvline(x = inflectionMidpointTrack[i], color = 'darkgrey')
+    plt.axvline(x = inflectionMidpointTrack[i], color = 'darkgrey') 
 
+  #Create a smoothed elevation dataset
   cutoff_Z = 2000
   fs_Z = 50000
   Z_smooth = butter_lowpass_filtfilt(Z, cutoff_Z, fs_Z);
@@ -358,6 +363,7 @@ for file_ticker in range(0,len(rw5_files)):
         dictLoad['L' + str(i)] = [placeHolder2]
         dictLoad_smooth['LS' + str(i)] = [placeHolder3]
 
+  #Initiate blank dictionaries for time conversion into seconds; allows for easier manipulation than with datetime objects
   dictTimeINUSBH_seconds = []
   dictTimerw5_seconds = []
 
@@ -388,11 +394,12 @@ for file_ticker in range(0,len(rw5_files)):
     for m in range(0, len(dictTimerw5_current)):
       dictTimerw5['Trw5' + str(i)][m] = datetime.timestamp(dictTimerw5['Trw5' + str(i)][m]) - dictTimerw5_min_float
 
-  #Calculate derivatives:
+  #Calculate derivatives of both elevation and applied pressure trends:
 
   dictLoad_derivative = {}
   dictZ_derivative = {}
 
+  #Use For loop to populate dictionaries 
   for i in range(0, len(dictLoad_smooth)):
 
     dictIndexL_current = dictLoad_smooth['LS' + str(i)]
